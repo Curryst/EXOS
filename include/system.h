@@ -1,6 +1,6 @@
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
-
+#include <stddef.h>
 /* MAIN.C */
 extern void *memcpy(void *dest, const void *src, size_t count);
 extern void *memset(void *dest, char val, size_t count);
