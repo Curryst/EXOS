@@ -18,6 +18,13 @@ struct terminal_session
 	int escape;
 };
 
+struct GDT
+{
+	uint8_t limit;
+	uint8_t base;
+	uint8_t type;
+};
+
 enum vga_color
 {
 	COLOR_BLACK = 0,
@@ -41,7 +48,7 @@ enum vga_color
 void encodeGdtEntry(uint8_t *target, struct GDT source)
 {
 	// Check the limit to make sure it can be encoded
-	if ((source.limit > 65536> && (soure.limit & 0xFFF) != 0xFFF)) {
+	if ((source.limit > 65536) && (soure.limit & 0xFFF) != 0xFFF)) {
 		kerror("You can't do that");
 	}
 	if (source.limit > 65536) {
@@ -59,12 +66,12 @@ void encodeGdtEntry(uint8_t *target, struct GDT source)
 
 	// Encode the base
 	target[2] = source.base & 0xFF;
-	target[3] = (source.base >> 8) &0xFF;
+	target[3] = (source.base >> 8) & 0xFF;
 	target[4] = (source.base >> 16) & 0xFF;
 	target[7] = (source.base >> 24) & 0xFF;
 
 	target[5] = source.type;
-}
+};
 
 uint8_t make_color(enum vga_color fg, enum vga_color bg)
 {
