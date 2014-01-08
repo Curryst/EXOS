@@ -34,3 +34,23 @@ _start:
 	jmp .Lhang
 
 .size _start, . - _start
+
+.global gdt_flush
+.extern gp
+gdt_flush:
+	lgdt gp
+	mov $0x10, %ax
+	mov %ax, %ds
+	mov %ax, %es
+	mov %ax, %fs
+	mov %ax, %gs
+	mov %ax, %ss
+	ljmp $0x08, $flush2
+flush2:
+	ret
+
+.global idt_load
+.extern idtp
+idt_load:
+	lidt idtp
+	ret

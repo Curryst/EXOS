@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <system.h>
 
 #if defined(__linux__)
 #error "You are not using a cross-compiler"
@@ -20,7 +21,7 @@ struct terminal_session
 
 struct GDT
 {
-	uint8_t limit;
+	int limit;
 	uint8_t base;
 	uint8_t type;
 };
@@ -45,33 +46,46 @@ enum vga_color
 	COLOR_WHITE = 15,
 };
 
-void encodeGdtEntry(uint8_t *target, struct GDT source)
+void *memcpy(void *dest, const void *src, size_t count)
 {
-	// Check the limit to make sure it can be encoded
-	if ((source.limit > 65536) && (soure.limit & 0xFFF) != 0xFFF)) {
-		kerror("You can't do that");
-	}
-	if (source.limit > 65536) {
-		// Adjust granularity if required
-		source.limit = source.limit >> 12;
-		target[6] = 0xC0;
-	} else {
-		target[6] = 0x40;
-	}
+    const char *sp = (const char *)src;
+    char *dp = (char *)dest;
+    for(; count != 0; count--) *dp++ = *sp++;
+    return dest;
+}
 
-	// Encode the limit
-	target[0] = source.limit & 0xFF;
-	target[1] = (source.limit >> 8) & 0xFF;
-	target[6] |= (source.limit >> 16) & 0xF;
+void *memset(void *dest, char val, size_t count)
+{
+    char *temp = (char *)dest;
+    for( ; count != 0; count--) *temp++ = val;
+    return dest;
+}
 
-	// Encode the base
-	target[2] = source.base & 0xFF;
-	target[3] = (source.base >> 8) & 0xFF;
-	target[4] = (source.base >> 16) & 0xFF;
-	target[7] = (source.base >> 24) & 0xFF;
+unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count)
+{
+    unsigned short *temp = (unsigned short *)dest;
+    for( ; count != 0; count--) *temp++ = val;
+    return dest;
+}
 
-	target[5] = source.type;
-};
+size_t strlen(const char *str)
+{
+    size_t retval;
+    for(retval = 0; *str != '\0'; str++) retval++;
+    return retval;
+}
+
+unsigned char inportb (unsigned short _port)
+{
+    unsigned char rv;
+    __asm__ __volatile__ ("inb %1, %0" : "=a" (rv) : "dN" (_port));
+    return rv;
+}
+
+void outportb (unsigned short _port, unsigned char _data)
+{
+    __asm__ __volatile__ ("outb %1, %0" : : "dN" (_port), "a" (_data));
+}
 
 uint8_t make_color(enum vga_color fg, enum vga_color bg)
 {
@@ -83,14 +97,6 @@ uint16_t make_vgaentry(char c, uint8_t color)
 	uint16_t c16 = c;
 	uint16_t color16 = color;
 	return c16 | color16 << 8;
-}
-
-size_t strlen(const char* str)
-{
-	size_t ret = 0;
-	while ( str[ret] != 0 )
-		ret++;
-	return ret;
 }
 
 static const size_t VGA_WIDTH = 80;
@@ -155,6 +161,8 @@ void terminal_writestring(const char* data)
 
 void kernel_main()
 {
+	gdt_install();
+	idt_install();
 	terminal_initialize();
 	terminal_writestring("Hello, kernel world!\n");
 }
