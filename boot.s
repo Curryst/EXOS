@@ -1,3 +1,4 @@
+# Set the flags
 .set ALIGN,		1<<0
 .set MEMINFO,		1<<1
 .set FLAGS,		ALIGN | MEMINFO
@@ -38,8 +39,11 @@ _start:
 .global gdt_flush
 .extern gp
 gdt_flush:
+	# Load gp
 	lgdt gp
+	# Move our stack so as not to conflict with GRUBs
 	mov $0x10, %ax
+	# Copy registers over
 	mov %ax, %ds
 	mov %ax, %es
 	mov %ax, %fs
